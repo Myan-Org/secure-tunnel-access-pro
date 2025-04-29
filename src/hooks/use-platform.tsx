@@ -8,7 +8,7 @@ export function usePlatform() {
   
   useEffect(() => {
     // Check if running inside Capacitor
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+    if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
       const userAgent = navigator.userAgent.toLowerCase();
       if (userAgent.indexOf('android') > -1) {
         setPlatform('android');
