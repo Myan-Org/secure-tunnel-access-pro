@@ -5,13 +5,15 @@ import { useVpn } from '../context/VpnContext';
 import ServerCard from '../components/ServerCard';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import ConnectionStatus from '../components/ConnectionStatus';
 import LoadingScreen from '../components/LoadingScreen';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const ServersPage: React.FC = () => {
   const { 
-    servers, 
+    serversByCountry,
     connectionState, 
     connectToServer, 
     disconnectVpn,
@@ -20,31 +22,39 @@ const ServersPage: React.FC = () => {
   } = useVpn();
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
   
   if (isLoading) {
     return <LoadingScreen />;
   }
+
+  const toggleCountryExpanded = (countryCode: string) => {
+    setExpandedCountries(prev => ({
+      ...prev,
+      [countryCode]: !prev[countryCode]
+    }));
+  };
   
-  const premiumServers = servers.filter(server => server.tier === 'premium');
-  const freeServers = servers.filter(server => server.tier === 'free');
+  // Filter servers by search term
+  const filteredServersByCountry = serversByCountry.map(country => ({
+    ...country,
+    servers: country.servers.filter(server => 
+      server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      server.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.country.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })).filter(country => country.servers.length > 0);
+
+  // Filter by tier for tab content
+  const getFreeServersByCountry = () => filteredServersByCountry.map(country => ({
+    ...country,
+    servers: country.servers.filter(server => server.tier === 'free')
+  })).filter(country => country.servers.length > 0);
   
-  const filteredServers = servers.filter(server => 
-    server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.country.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const filteredPremiumServers = premiumServers.filter(server =>
-    server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.country.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const filteredFreeServers = freeServers.filter(server =>
-    server.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    server.country.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getPremiumServersByCountry = () => filteredServersByCountry.map(country => ({
+    ...country,
+    servers: country.servers.filter(server => server.tier === 'premium')
+  })).filter(country => country.servers.length > 0);
   
   return (
     <Layout title="VPN Servers">
@@ -74,54 +84,105 @@ const ServersPage: React.FC = () => {
         </TabsList>
         
         <TabsContent value="all" className="space-y-4">
-          {filteredServers.length === 0 ? (
+          {filteredServersByCountry.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">No servers found</p>
           ) : (
-            filteredServers.map(server => (
-              <ServerCard 
-                key={server.id} 
-                server={server} 
-                onConnect={connectToServer}
-                isCurrentServer={connectionState.currentServer?.id === server.id}
-                isConnecting={connectionState.isConnecting}
-                disabled={
-                  server.tier === 'premium' && 
-                  subscription.tier === 'free'
-                }
-              />
+            filteredServersByCountry.map(countryGroup => (
+              <div key={countryGroup.countryCode} className="border rounded-lg overflow-hidden">
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleCountryExpanded(countryGroup.countryCode)}
+                  className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-medium">{countryGroup.country}</span>
+                    <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
+                  </div>
+                  {expandedCountries[countryGroup.countryCode] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </Button>
+                <div className={cn("space-y-2 p-3", !expandedCountries[countryGroup.countryCode] && "hidden")}>
+                  {countryGroup.servers.map(server => (
+                    <ServerCard 
+                      key={server.id} 
+                      server={server} 
+                      onConnect={connectToServer}
+                      isCurrentServer={connectionState.currentServer?.id === server.id}
+                      isConnecting={connectionState.isConnecting}
+                      disabled={
+                        server.tier === 'premium' && 
+                        subscription.tier === 'free'
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
             ))
           )}
         </TabsContent>
         
         <TabsContent value="free" className="space-y-4">
-          {filteredFreeServers.length === 0 ? (
+          {getFreeServersByCountry().length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">No free servers found</p>
           ) : (
-            filteredFreeServers.map(server => (
-              <ServerCard 
-                key={server.id} 
-                server={server} 
-                onConnect={connectToServer}
-                isCurrentServer={connectionState.currentServer?.id === server.id}
-                isConnecting={connectionState.isConnecting}
-              />
+            getFreeServersByCountry().map(countryGroup => (
+              <div key={countryGroup.countryCode} className="border rounded-lg overflow-hidden">
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleCountryExpanded(countryGroup.countryCode)}
+                  className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-medium">{countryGroup.country}</span>
+                    <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
+                  </div>
+                  {expandedCountries[countryGroup.countryCode] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </Button>
+                <div className={cn("space-y-2 p-3", !expandedCountries[countryGroup.countryCode] && "hidden")}>
+                  {countryGroup.servers.map(server => (
+                    <ServerCard 
+                      key={server.id} 
+                      server={server} 
+                      onConnect={connectToServer}
+                      isCurrentServer={connectionState.currentServer?.id === server.id}
+                      isConnecting={connectionState.isConnecting}
+                    />
+                  ))}
+                </div>
+              </div>
             ))
           )}
         </TabsContent>
         
         <TabsContent value="premium" className="space-y-4">
-          {filteredPremiumServers.length === 0 ? (
+          {getPremiumServersByCountry().length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">No premium servers found</p>
           ) : (
-            filteredPremiumServers.map(server => (
-              <ServerCard 
-                key={server.id} 
-                server={server} 
-                onConnect={connectToServer}
-                isCurrentServer={connectionState.currentServer?.id === server.id}
-                isConnecting={connectionState.isConnecting}
-                disabled={subscription.tier === 'free'}
-              />
+            getPremiumServersByCountry().map(countryGroup => (
+              <div key={countryGroup.countryCode} className="border rounded-lg overflow-hidden">
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleCountryExpanded(countryGroup.countryCode)}
+                  className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-medium">{countryGroup.country}</span>
+                    <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
+                  </div>
+                  {expandedCountries[countryGroup.countryCode] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </Button>
+                <div className={cn("space-y-2 p-3", !expandedCountries[countryGroup.countryCode] && "hidden")}>
+                  {countryGroup.servers.map(server => (
+                    <ServerCard 
+                      key={server.id} 
+                      server={server} 
+                      onConnect={connectToServer}
+                      isCurrentServer={connectionState.currentServer?.id === server.id}
+                      isConnecting={connectionState.isConnecting}
+                      disabled={subscription.tier === 'free'}
+                    />
+                  ))}
+                </div>
+              </div>
             ))
           )}
           

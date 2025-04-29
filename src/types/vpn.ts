@@ -18,6 +18,12 @@ export interface VpnServer {
   coreType: VpnCoreType;
 }
 
+export interface VpnServersByCountry {
+  country: string;
+  countryCode: string;
+  servers: VpnServer[];
+}
+
 export interface VpnKey {
   id: string;
   key: string;

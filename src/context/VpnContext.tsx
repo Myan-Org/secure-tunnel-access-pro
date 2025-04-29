@@ -1,9 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { VpnServer, VpnConnectionState, UserSubscription } from '../types/vpn';
+import { VpnServer, VpnConnectionState, UserSubscription, VpnServersByCountry } from '../types/vpn';
 import { toast } from 'sonner';
 
 interface VpnContextType {
+  serversByCountry: VpnServersByCountry[];
   servers: VpnServer[];
   connectionState: VpnConnectionState;
   subscription: UserSubscription;
@@ -25,6 +26,7 @@ export const useVpn = () => {
 
 export const VpnProvider = ({ children }: { children: ReactNode }) => {
   const [servers, setServers] = useState<VpnServer[]>([]);
+  const [serversByCountry, setServersByCountry] = useState<VpnServersByCountry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [connectionState, setConnectionState] = useState<VpnConnectionState>({
     isConnected: false,
@@ -45,6 +47,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       const mockServers: VpnServer[] = [
+        // United States servers
         {
           id: '1',
           name: 'US East',
@@ -59,6 +62,19 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
         },
         {
           id: '2',
+          name: 'US West',
+          location: 'San Francisco',
+          country: 'United States',
+          countryCode: 'us',
+          status: 'online',
+          tier: 'free',
+          ping: 140,
+          load: 55,
+          coreType: 'v2fly'
+        },
+        // Japan servers
+        {
+          id: '3',
           name: 'Japan Central',
           location: 'Tokyo',
           country: 'Japan',
@@ -70,7 +86,20 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           coreType: 'v2fly'
         },
         {
-          id: '3',
+          id: '4',
+          name: 'Japan South',
+          location: 'Osaka',
+          country: 'Japan',
+          countryCode: 'jp',
+          status: 'online',
+          tier: 'premium',
+          ping: 160,
+          load: 40,
+          coreType: 'xray'
+        },
+        // Germany server
+        {
+          id: '5',
           name: 'Germany',
           location: 'Frankfurt',
           country: 'Germany',
@@ -81,8 +110,9 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           load: 30,
           coreType: 'xray'
         },
+        // UK server
         {
-          id: '4',
+          id: '6',
           name: 'UK London',
           location: 'London',
           country: 'United Kingdom',
@@ -93,8 +123,9 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           load: 20,
           coreType: 'v2fly'
         },
+        // Singapore server
         {
-          id: '5',
+          id: '7',
           name: 'Singapore',
           location: 'Singapore',
           country: 'Singapore',
@@ -105,8 +136,9 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           load: 50,
           coreType: 'xray'
         },
+        // Australia server
         {
-          id: '6',
+          id: '8',
           name: 'Australia',
           location: 'Sydney',
           country: 'Australia',
@@ -120,6 +152,26 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
       ];
       
       setServers(mockServers);
+      
+      // Group servers by country
+      const groupedServers: VpnServersByCountry[] = [];
+      mockServers.forEach(server => {
+        const existingCountry = groupedServers.find(
+          item => item.countryCode === server.countryCode
+        );
+        
+        if (existingCountry) {
+          existingCountry.servers.push(server);
+        } else {
+          groupedServers.push({
+            country: server.country,
+            countryCode: server.countryCode,
+            servers: [server]
+          });
+        }
+      });
+      
+      setServersByCountry(groupedServers);
       setIsLoading(false);
     };
     
@@ -211,6 +263,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
     <VpnContext.Provider
       value={{
         servers,
+        serversByCountry,
         connectionState,
         subscription,
         isLoading,
