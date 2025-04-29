@@ -34,6 +34,9 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
     tier: 'free',
     active: true
   });
+  
+  // Store the interval ID outside of the connection state
+  const [trafficUpdateInterval, setTrafficUpdateInterval] = useState<number | null>(null);
 
   // Mock server data
   useEffect(() => {
@@ -157,7 +160,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
       toast.success(`Connected to ${server.name}`);
       
       // Simulate traffic data updates
-      const intervalId = setInterval(() => {
+      const intervalId = window.setInterval(() => {
         setConnectionState(prev => ({
           ...prev,
           bytesUp: (prev.bytesUp || 0) + Math.floor(Math.random() * 50000),
@@ -165,8 +168,8 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
         }));
       }, 3000);
       
-      // Cleanup interval on disconnect
-      return () => clearInterval(intervalId);
+      // Store the interval ID so we can clean it up later
+      setTrafficUpdateInterval(intervalId);
     } catch (error) {
       toast.error('Failed to connect to VPN server');
       setConnectionState({
@@ -177,6 +180,12 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const disconnectVpn = () => {
+    // Clear the traffic update interval if it exists
+    if (trafficUpdateInterval !== null) {
+      window.clearInterval(trafficUpdateInterval);
+      setTrafficUpdateInterval(null);
+    }
+    
     setConnectionState({
       isConnected: false,
       isConnecting: false
