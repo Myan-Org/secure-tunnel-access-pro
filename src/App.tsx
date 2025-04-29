@@ -19,10 +19,28 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminServers from "./pages/admin/Servers";
 import AdminKeys from "./pages/admin/Keys";
 
+// For mobile platform detection
+import { usePlatform } from "./hooks/use-platform";
+import { useEffect } from "react";
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+// Define App component with all providers
+const AppContent = () => {
+  const platform = usePlatform();
+  
+  useEffect(() => {
+    // Apply mobile-specific styles when running on mobile
+    if (platform !== 'web') {
+      document.body.classList.add('capacitor-app');
+      // Set safe areas for iOS devices
+      if (platform === 'ios') {
+        document.body.classList.add('ios-device');
+      }
+    }
+  }, [platform]);
+
+  return (
     <TooltipProvider>
       <VpnProvider>
         <Toaster />
@@ -45,6 +63,12 @@ const App = () => (
         </BrowserRouter>
       </VpnProvider>
     </TooltipProvider>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AppContent />
   </QueryClientProvider>
 );
 
