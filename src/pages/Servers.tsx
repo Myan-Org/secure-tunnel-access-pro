@@ -5,11 +5,29 @@ import { useVpn } from '../context/VpnContext';
 import ServerCard from '../components/ServerCard';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Flag } from 'lucide-react';
 import ConnectionStatus from '../components/ConnectionStatus';
 import LoadingScreen from '../components/LoadingScreen';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+// Country flag component
+const CountryFlag = ({ countryCode }: { countryCode: string }) => {
+  const getFlagColor = (code: string) => {
+    // Map country codes to colors for visual distinction
+    switch (code.toLowerCase()) {
+      case 'us': return 'text-blue-600';
+      case 'jp': return 'text-red-500';
+      case 'de': return 'text-yellow-500';
+      case 'gb': return 'text-red-600';
+      case 'sg': return 'text-red-500';
+      case 'au': return 'text-green-600';
+      default: return 'text-gray-500';
+    }
+  };
+
+  return <Flag className={cn("mr-2", getFlagColor(countryCode))} size={18} />;
+};
 
 const ServersPage: React.FC = () => {
   const { 
@@ -95,6 +113,7 @@ const ServersPage: React.FC = () => {
                   className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-2">
+                    <CountryFlag countryCode={countryGroup.countryCode} />
                     <span className="text-lg font-medium">{countryGroup.country}</span>
                     <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
                   </div>
@@ -132,6 +151,7 @@ const ServersPage: React.FC = () => {
                   className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-2">
+                    <CountryFlag countryCode={countryGroup.countryCode} />
                     <span className="text-lg font-medium">{countryGroup.country}</span>
                     <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
                   </div>
@@ -165,6 +185,7 @@ const ServersPage: React.FC = () => {
                   className="w-full flex justify-between items-center p-3 hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-2">
+                    <CountryFlag countryCode={countryGroup.countryCode} />
                     <span className="text-lg font-medium">{countryGroup.country}</span>
                     <span className="text-sm text-muted-foreground">({countryGroup.servers.length} servers)</span>
                   </div>
