@@ -1,33 +1,30 @@
 
 import React, { useState } from 'react';
-import Layout from '../components/Layout';
 import { useVpn } from '../context/VpnContext';
 import ServerCard from '../components/ServerCard';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
-import ConnectionStatus from '../components/ConnectionStatus';
+import { Search, X, Zap } from 'lucide-react';
 import LoadingScreen from '../components/LoadingScreen';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
-// Country flag component with improved styling
 const CountryFlag = ({ countryCode }: { countryCode: string }) => {
-  const getFlagColor = (code: string) => {
-    switch (code.toLowerCase()) {
-      case 'us': return 'text-blue-600';
-      case 'jp': return 'text-red-500';
-      case 'de': return 'text-yellow-500';
-      case 'gb': return 'text-red-600';
-      case 'sg': return 'text-red-500';
-      case 'au': return 'text-green-600';
-      default: return 'text-gray-500';
-    }
+  const flagEmojis: Record<string, string> = {
+    'us': '🇺🇸',
+    'jp': '🇯🇵', 
+    'de': '🇩🇪',
+    'gb': '🇬🇧',
+    'sg': '🇸🇬',
+    'au': '🇦🇺',
+    'fr': '🇫🇷',
+    'nl': '🇳🇱',
+    'es': '🇪🇸'
   };
 
   return (
-    <div className="bg-muted/50 rounded-full p-2">
-      <MapPin className={cn("", getFlagColor(countryCode))} size={18} />
+    <div className="text-2xl">
+      {flagEmojis[countryCode.toLowerCase()] || '🌍'}
     </div>
   );
 };
@@ -43,18 +40,10 @@ const ServersPage: React.FC = () => {
   } = useVpn();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedCountries, setExpandedCountries] = useState<Record<string, boolean>>({});
   
   if (isLoading) {
     return <LoadingScreen />;
   }
-
-  const toggleCountryExpanded = (countryCode: string) => {
-    setExpandedCountries(prev => ({
-      ...prev,
-      [countryCode]: !prev[countryCode]
-    }));
-  };
   
   // Filter servers by search term
   const filteredServersByCountry = serversByCountry.map(country => ({
@@ -77,140 +66,178 @@ const ServersPage: React.FC = () => {
     servers: country.servers.filter(server => server.tier === 'premium')
   })).filter(country => country.servers.length > 0);
   
-  const renderCountryGroup = (countryGroup: any) => (
-    <div key={countryGroup.countryCode} className="bg-card rounded-xl overflow-hidden border border-border/50 shadow-sm">
-      <Button
-        variant="ghost"
-        onClick={() => toggleCountryExpanded(countryGroup.countryCode)}
-        className="w-full flex justify-between items-center p-4 hover:bg-muted/30 rounded-none"
-      >
-        <div className="flex items-center gap-3">
-          <CountryFlag countryCode={countryGroup.countryCode} />
-          <div className="text-left">
-            <span className="text-lg font-semibold text-foreground">{countryGroup.country}</span>
-            <p className="text-sm text-muted-foreground">{countryGroup.servers.length} servers available</p>
+  const renderServerList = (countryGroups: any[]) => (
+    <div className="space-y-2">
+      {countryGroups.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <Search className="text-muted-foreground" size={24} />
           </div>
+          <p className="text-muted-foreground text-lg">No servers found</p>
+          <p className="text-sm text-muted-foreground">Try adjusting your search terms</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">
-              {countryGroup.servers.filter((s: any) => s.status === 'online').length} online
-            </p>
+      ) : (
+        countryGroups.map(countryGroup => (
+          <div key={countryGroup.countryCode} className="space-y-2">
+            {/* Country Header */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-muted/20 rounded-lg">
+              <CountryFlag countryCode={countryGroup.countryCode} />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">{countryGroup.country}</h3>
+                <div className="flex items-center gap-2">
+                  <Zap size={12} className="text-green-500" />
+                  <span className="text-xs text-muted-foreground">
+                    {countryGroup.servers.filter((s: any) => s.status === 'online').length} servers
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Server List */}
+            <div className="space-y-2 pl-4">
+              {countryGroup.servers.map((server: any) => (
+                <div key={server.id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/50 hover:border-vpn-purple/30 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h4 className="font-medium text-foreground">{server.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">{server.location}</span>
+                          {server.ping && (
+                            <span className="text-xs text-muted-foreground">
+                              • {server.ping}ms
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {server.tier === 'premium' && (
+                      <Badge variant="outline" className="border-vpn-purple text-vpn-purple text-xs">
+                        VIP
+                      </Badge>
+                    )}
+                    
+                    <div className={`w-2 h-2 rounded-full ${
+                      server.status === 'online' ? 'bg-green-500' : 'bg-gray-300'
+                    }`} />
+                    
+                    <Button 
+                      variant={connectionState.currentServer?.id === server.id ? "secondary" : "outline"} 
+                      size="sm"
+                      className={connectionState.currentServer?.id === server.id 
+                        ? "bg-vpn-light-purple text-vpn-purple" 
+                        : "border-vpn-purple/30 text-vpn-purple hover:bg-vpn-light-purple"
+                      }
+                      onClick={() => connectToServer(server)}
+                      disabled={
+                        connectionState.currentServer?.id === server.id || 
+                        connectionState.isConnecting || 
+                        (server.tier === 'premium' && subscription.tier === 'free') ||
+                        server.status !== 'online'
+                      }
+                    >
+                      {connectionState.isConnecting ? (
+                        <div className="w-4 h-4 border-2 border-vpn-purple border-t-transparent rounded-full animate-spin" />
+                      ) : connectionState.currentServer?.id === server.id ? (
+                        "Connected"
+                      ) : (
+                        "Connect"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          {expandedCountries[countryGroup.countryCode] ? 
-            <ChevronUp size={20} className="text-muted-foreground" /> : 
-            <ChevronDown size={20} className="text-muted-foreground" />
-          }
-        </div>
-      </Button>
-      <div className={cn(
-        "transition-all duration-200 ease-in-out",
-        expandedCountries[countryGroup.countryCode] 
-          ? "max-h-[2000px] opacity-100" 
-          : "max-h-0 opacity-0 overflow-hidden"
-      )}>
-        <div className="p-4 pt-0 space-y-3">
-          {countryGroup.servers.map((server: any) => (
-            <ServerCard 
-              key={server.id} 
-              server={server} 
-              onConnect={connectToServer}
-              isCurrentServer={connectionState.currentServer?.id === server.id}
-              isConnecting={connectionState.isConnecting}
-              disabled={
-                server.tier === 'premium' && 
-                subscription.tier === 'free'
-              }
-            />
-          ))}
-        </div>
-      </div>
+        ))
+      )}
     </div>
   );
   
   return (
-    <Layout title="VPN Servers">
-      <div className="space-y-6">
-        <ConnectionStatus 
-          connectionState={connectionState}
-          onDisconnect={disconnectVpn}
-        />
-        
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <h1 className="text-xl font-bold">Select Location</h1>
+        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+          <X size={24} />
+        </Button>
+      </div>
+      
+      <div className="p-4 space-y-4">
+        {/* Search */}
         <div className="relative">
           <Search 
             size={18} 
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" 
           />
           <Input 
-            placeholder="Search servers by location..." 
-            className="pl-10 h-12 rounded-xl border-border/50 focus:border-vpn-purple"
+            placeholder="Search for streaming, city or country" 
+            className="pl-10 h-12 rounded-xl border-border/50 focus:border-vpn-purple bg-muted/30"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
         
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="w-full bg-muted/50 rounded-xl p-1">
-            <TabsTrigger value="all" className="flex-1 rounded-lg">All Servers</TabsTrigger>
-            <TabsTrigger value="free" className="flex-1 rounded-lg">Free Tier</TabsTrigger>
-            <TabsTrigger value="premium" className="flex-1 rounded-lg">Premium</TabsTrigger>
+        {/* Tabs */}
+        <Tabs defaultValue="free" className="space-y-4">
+          <TabsList className="w-full bg-muted/50 rounded-xl p-1 grid grid-cols-3">
+            <TabsTrigger value="free" className="rounded-lg">Free</TabsTrigger>
+            <TabsTrigger value="premium" className="rounded-lg">VIP</TabsTrigger>
+            <TabsTrigger value="history" className="rounded-lg">History</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="all" className="space-y-4">
-            {filteredServersByCountry.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Search className="text-muted-foreground" size={24} />
-                </div>
-                <p className="text-muted-foreground text-lg">No servers found</p>
-                <p className="text-sm text-muted-foreground">Try adjusting your search terms</p>
-              </div>
-            ) : (
-              filteredServersByCountry.map(renderCountryGroup)
-            )}
-          </TabsContent>
-          
           <TabsContent value="free" className="space-y-4">
-            {getFreeServersByCountry().length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Search className="text-muted-foreground" size={24} />
-                </div>
-                <p className="text-muted-foreground text-lg">No free servers found</p>
-              </div>
-            ) : (
-              getFreeServersByCountry().map(renderCountryGroup)
-            )}
+            <div className="flex items-center gap-2 px-2">
+              <Zap size={16} className="text-vpn-purple" />
+              <span className="text-sm font-medium text-foreground">Free Servers</span>
+              <Badge variant="outline" className="border-vpn-purple text-vpn-purple text-xs ml-auto">
+                FREE
+              </Badge>
+            </div>
+            {renderServerList(getFreeServersByCountry())}
           </TabsContent>
           
           <TabsContent value="premium" className="space-y-4">
-            {getPremiumServersByCountry().length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <Search className="text-muted-foreground" size={24} />
-                </div>
-                <p className="text-muted-foreground text-lg">No premium servers found</p>
-              </div>
-            ) : (
-              getPremiumServersByCountry().map(renderCountryGroup)
-            )}
+            <div className="flex items-center gap-2 px-2">
+              <Zap size={16} className="text-vpn-purple" />
+              <span className="text-sm font-medium text-foreground">VIP Servers</span>
+              <Badge className="bg-vpn-purple text-white text-xs ml-auto">
+                VIP
+              </Badge>
+            </div>
             
             {subscription.tier === 'free' && (
-              <div className="bg-gradient-to-br from-vpn-purple/5 to-vpn-light-purple/20 p-6 rounded-xl border border-vpn-purple/20 text-center">
-                <h3 className="text-lg font-semibold text-vpn-purple mb-2">Unlock Premium Servers</h3>
-                <p className="text-muted-foreground mb-4">Get access to faster servers and premium locations</p>
+              <div className="bg-gradient-to-br from-vpn-purple/5 to-vpn-light-purple/20 p-4 rounded-xl border border-vpn-purple/20 text-center mb-4">
+                <h3 className="text-lg font-semibold text-vpn-purple mb-2">Unlock VIP Servers</h3>
+                <p className="text-muted-foreground mb-4 text-sm">Get access to faster servers and premium locations</p>
                 <Button 
-                  className="bg-vpn-purple hover:bg-vpn-dark-purple text-white"
+                  className="bg-vpn-purple hover:bg-vpn-dark-purple text-white rounded-full px-6"
                   onClick={() => console.log('Navigate to upgrade page')}
                 >
-                  Upgrade to Premium
+                  Upgrade to VIP
                 </Button>
               </div>
             )}
+            
+            {renderServerList(getPremiumServersByCountry())}
+          </TabsContent>
+          
+          <TabsContent value="history" className="space-y-4">
+            <div className="text-center py-12">
+              <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <Zap className="text-muted-foreground" size={24} />
+              </div>
+              <p className="text-muted-foreground text-lg">No connection history</p>
+              <p className="text-sm text-muted-foreground">Your recent connections will appear here</p>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </div>
   );
 };
 
