@@ -16,7 +16,9 @@ const HomePage: React.FC = () => {
     subscription,
     upgradeSubscription,
     isLoading,
-    servers
+    servers,
+    selectedServer,
+    connectToServer
   } = useVpn();
   const navigate = useNavigate();
   
@@ -90,29 +92,46 @@ const HomePage: React.FC = () => {
           )}
         </div>
 
-        {/* Current Server or Quick Connect */}
-        {connectionState.isConnected && connectionState.currentServer ? (
+        {/* Selected Server Card */}
+        {selectedServer ? (
           <Card className="w-full max-w-sm mb-8 bg-card/50 border-vpn-purple/20">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded bg-vpn-purple/20 flex items-center justify-center">
                     <Globe size={16} className="text-vpn-purple" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">{connectionState.currentServer.name}</p>
-                    <p className="text-sm text-muted-foreground">{connectionState.currentServer.location}</p>
+                    <p className="font-medium text-foreground">{selectedServer.name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedServer.location}</p>
                   </div>
                 </div>
+              </div>
+              
+              {connectionState.isConnected && connectionState.currentServer?.id === selectedServer.id ? (
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  className="w-full border-vpn-purple/30 text-vpn-purple hover:bg-vpn-purple/10"
                   onClick={disconnectVpn}
-                  className="border-vpn-purple/30 text-vpn-purple hover:bg-vpn-purple/10"
                 >
                   Disconnect
                 </Button>
-              </div>
+              ) : (
+                <Button 
+                  className="w-full bg-vpn-purple hover:bg-vpn-dark-purple text-white"
+                  onClick={() => connectToServer(selectedServer)}
+                  disabled={connectionState.isConnecting || selectedServer.status !== 'online'}
+                >
+                  {connectionState.isConnecting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Connecting...
+                    </div>
+                  ) : (
+                    'Connect'
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (

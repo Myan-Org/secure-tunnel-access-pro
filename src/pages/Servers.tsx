@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useVpn } from '../context/VpnContext';
 import ServerCard from '../components/ServerCard';
@@ -8,6 +7,7 @@ import { Search, X, Zap } from 'lucide-react';
 import LoadingScreen from '../components/LoadingScreen';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 const CountryFlag = ({ countryCode }: { countryCode: string }) => {
   const flagEmojis: Record<string, string> = {
@@ -32,13 +32,12 @@ const CountryFlag = ({ countryCode }: { countryCode: string }) => {
 const ServersPage: React.FC = () => {
   const { 
     serversByCountry,
-    connectionState, 
-    connectToServer, 
-    disconnectVpn,
     subscription,
-    isLoading
+    isLoading,
+    selectServer
   } = useVpn();
   
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   
   if (isLoading) {
@@ -65,6 +64,11 @@ const ServersPage: React.FC = () => {
     ...country,
     servers: country.servers.filter(server => server.tier === 'premium')
   })).filter(country => country.servers.length > 0);
+  
+  const handleServerClick = (server: any) => {
+    selectServer(server);
+    navigate('/');
+  };
   
   const renderServerList = (countryGroups: any[]) => (
     <div className="space-y-2">
@@ -96,7 +100,11 @@ const ServersPage: React.FC = () => {
             {/* Server List */}
             <div className="space-y-2 pl-4">
               {countryGroup.servers.map((server: any) => (
-                <div key={server.id} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/50 hover:border-vpn-purple/30 transition-colors">
+                <div 
+                  key={server.id} 
+                  className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/50 hover:border-vpn-purple/30 transition-colors cursor-pointer"
+                  onClick={() => handleServerClick(server)}
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div>
@@ -123,30 +131,6 @@ const ServersPage: React.FC = () => {
                     <div className={`w-2 h-2 rounded-full ${
                       server.status === 'online' ? 'bg-green-500' : 'bg-gray-300'
                     }`} />
-                    
-                    <Button 
-                      variant={connectionState.currentServer?.id === server.id ? "secondary" : "outline"} 
-                      size="sm"
-                      className={connectionState.currentServer?.id === server.id 
-                        ? "bg-vpn-light-purple text-vpn-purple" 
-                        : "border-vpn-purple/30 text-vpn-purple hover:bg-vpn-light-purple"
-                      }
-                      onClick={() => connectToServer(server)}
-                      disabled={
-                        connectionState.currentServer?.id === server.id || 
-                        connectionState.isConnecting || 
-                        (server.tier === 'premium' && subscription.tier === 'free') ||
-                        server.status !== 'online'
-                      }
-                    >
-                      {connectionState.isConnecting ? (
-                        <div className="w-4 h-4 border-2 border-vpn-purple border-t-transparent rounded-full animate-spin" />
-                      ) : connectionState.currentServer?.id === server.id ? (
-                        "Connected"
-                      ) : (
-                        "Connect"
-                      )}
-                    </Button>
                   </div>
                 </div>
               ))}

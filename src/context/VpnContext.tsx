@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { VpnServer, VpnConnectionState, UserSubscription, VpnServersByCountry } from '../types/vpn';
 import { toast } from 'sonner';
@@ -9,9 +8,11 @@ interface VpnContextType {
   connectionState: VpnConnectionState;
   subscription: UserSubscription;
   isLoading: boolean;
+  selectedServer: VpnServer | null;
   connectToServer: (server: VpnServer) => Promise<void>;
   disconnectVpn: () => void;
   upgradeSubscription: () => void;
+  selectServer: (server: VpnServer) => void;
 }
 
 const VpnContext = createContext<VpnContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
   const [servers, setServers] = useState<VpnServer[]>([]);
   const [serversByCountry, setServersByCountry] = useState<VpnServersByCountry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedServer, setSelectedServer] = useState<VpnServer | null>(null);
   const [connectionState, setConnectionState] = useState<VpnConnectionState>({
     isConnected: false,
     isConnecting: false
@@ -178,6 +180,10 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
     loadServers();
   }, []);
 
+  const selectServer = (server: VpnServer) => {
+    setSelectedServer(server);
+  };
+
   const connectToServer = async (server: VpnServer) => {
     // Check if user can connect to this server based on subscription
     if (server.tier === 'premium' && subscription.tier === 'free') {
@@ -267,9 +273,11 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
         connectionState,
         subscription,
         isLoading,
+        selectedServer,
         connectToServer,
         disconnectVpn,
-        upgradeSubscription
+        upgradeSubscription,
+        selectServer
       }}
     >
       {children}
