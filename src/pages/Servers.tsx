@@ -1,6 +1,6 @@
+
 import React, { useState } from 'react';
 import { useVpn } from '../context/VpnContext';
-import ServerCard from '../components/ServerCard';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, X, Zap } from 'lucide-react';
@@ -97,12 +97,12 @@ const ServersPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Server List */}
+            {/* Server List - removed connect buttons */}
             <div className="space-y-2 pl-4">
               {countryGroup.servers.map((server: any) => (
                 <div 
                   key={server.id} 
-                  className="flex items-center justify-between p-3 bg-card rounded-lg border border-border/50 hover:border-vpn-purple/30 transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-4 bg-card rounded-lg border border-border/50 hover:border-vpn-purple/30 transition-colors cursor-pointer hover:bg-card/80"
                   onClick={() => handleServerClick(server)}
                 >
                   <div className="flex-1">

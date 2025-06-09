@@ -42,7 +42,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
   // Store the interval ID outside of the connection state
   const [trafficUpdateInterval, setTrafficUpdateInterval] = useState<number | null>(null);
 
-  // Mock server data
+  // Mock server data - reduced to 4 countries
   useEffect(() => {
     const loadServers = async () => {
       // Simulating API call
@@ -106,7 +106,7 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           location: 'Frankfurt',
           country: 'Germany',
           countryCode: 'de',
-          status: 'offline',
+          status: 'online',
           tier: 'free',
           ping: 90,
           load: 30,
@@ -119,36 +119,10 @@ export const VpnProvider = ({ children }: { children: ReactNode }) => {
           location: 'London',
           country: 'United Kingdom',
           countryCode: 'gb',
-          status: 'maintenance',
+          status: 'online',
           tier: 'premium',
           ping: 85,
           load: 20,
-          coreType: 'v2fly'
-        },
-        // Singapore server
-        {
-          id: '7',
-          name: 'Singapore',
-          location: 'Singapore',
-          country: 'Singapore',
-          countryCode: 'sg',
-          status: 'online',
-          tier: 'premium',
-          ping: 140,
-          load: 50,
-          coreType: 'xray'
-        },
-        // Australia server
-        {
-          id: '8',
-          name: 'Australia',
-          location: 'Sydney',
-          country: 'Australia',
-          countryCode: 'au',
-          status: 'online',
-          tier: 'premium',
-          ping: 200,
-          load: 35,
           coreType: 'v2fly'
         },
       ];
