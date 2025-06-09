@@ -3,7 +3,7 @@ import React from 'react';
 import { VpnServer } from '../types/vpn';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Wifi, WifiOff, AlertTriangle, Signal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ServerCardProps {
@@ -17,13 +17,13 @@ interface ServerCardProps {
 export const getStatusIcon = (status: string) => {
   switch (status) {
     case 'online':
-      return <Wifi className="text-green-500" size={16} />;
+      return <div className="w-2 h-2 bg-green-500 rounded-full" />;
     case 'offline':
-      return <WifiOff className="text-red-500" size={16} />;
+      return <div className="w-2 h-2 bg-red-500 rounded-full" />;
     case 'maintenance':
-      return <AlertTriangle className="text-amber-500" size={16} />;
+      return <div className="w-2 h-2 bg-amber-500 rounded-full" />;
     default:
-      return <Wifi className="text-gray-500" size={16} />;
+      return <div className="w-2 h-2 bg-gray-500 rounded-full" />;
   }
 };
 
@@ -34,61 +34,87 @@ const ServerCard: React.FC<ServerCardProps> = ({
   isConnecting = false,
   disabled = false
 }) => {
+  const getPingColor = (ping?: number) => {
+    if (!ping) return "text-muted-foreground";
+    if (ping < 100) return "text-green-600";
+    if (ping > 150) return "text-red-600";
+    return "text-amber-600";
+  };
+
   return (
     <div 
       className={cn(
-        "border rounded-xl p-4 relative overflow-hidden transition-all duration-300",
-        isCurrentServer ? "border-vpn-purple shadow-lg shadow-vpn-purple/10" : "hover:border-vpn-purple/50",
+        "relative bg-card border rounded-xl p-4 transition-all duration-200 hover:shadow-md",
+        isCurrentServer 
+          ? "border-vpn-purple bg-vpn-purple/5 shadow-lg" 
+          : "border-border/50 hover:border-vpn-purple/30",
         disabled && "opacity-60"
       )}
     >
       {isCurrentServer && (
-        <div className="absolute -top-4 -right-4 bg-vpn-purple text-white text-xs px-8 py-1 rotate-45 transform">
+        <div className="absolute -top-2 -right-2 bg-vpn-purple text-white text-xs px-3 py-1 rounded-full font-medium">
           Connected
         </div>
       )}
       
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <h3 className="font-semibold text-lg">{server.name}</h3>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <h3 className="font-semibold text-lg text-foreground">{server.name}</h3>
           <p className="text-sm text-muted-foreground">{server.location}, {server.country}</p>
         </div>
-        <div className="flex gap-2">
-          <Badge variant={server.tier === 'premium' ? "default" : "outline"} className={server.tier === 'premium' ? "bg-vpn-purple hover:bg-vpn-purple/90" : ""}>
-            {server.tier === 'premium' ? 'Premium' : 'Free'}
-          </Badge>
-        </div>
+        <Badge 
+          variant={server.tier === 'premium' ? "default" : "outline"} 
+          className={cn(
+            "ml-2",
+            server.tier === 'premium' 
+              ? "bg-vpn-purple hover:bg-vpn-purple/90 text-white" 
+              : "border-border text-muted-foreground"
+          )}
+        >
+          {server.tier === 'premium' ? 'Premium' : 'Free'}
+        </Badge>
       </div>
       
-      <div className="flex justify-between items-center text-sm text-muted-foreground my-3">
-        <div className="flex items-center gap-1">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
           {getStatusIcon(server.status)}
-          <span className="capitalize">{server.status}</span>
+          <span className="text-sm text-muted-foreground capitalize">{server.status}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <span>Core: </span>
-          <Badge variant="outline" className="text-xs">
-            {server.coreType.toUpperCase()}
-          </Badge>
-        </div>
+        
         {server.ping && (
-          <div>
-            Ping: <span className={server.ping < 100 ? "text-green-500" : server.ping > 150 ? "text-red-500" : "text-amber-500"}>{server.ping} ms</span>
+          <div className="flex items-center gap-1">
+            <Signal size={14} className={getPingColor(server.ping)} />
+            <span className={cn("text-sm font-medium", getPingColor(server.ping))}>
+              {server.ping}ms
+            </span>
           </div>
         )}
       </div>
       
       <Button 
-        variant="outline" 
+        variant={isCurrentServer ? "secondary" : "outline"} 
         className={cn(
-          "w-full mt-2 border-vpn-purple/50 text-vpn-purple hover:bg-vpn-light-purple hover:text-vpn-purple",
-          isCurrentServer && "bg-vpn-light-purple"
+          "w-full rounded-lg font-medium transition-colors",
+          isCurrentServer 
+            ? "bg-vpn-light-purple text-vpn-purple hover:bg-vpn-light-purple/80" 
+            : "border-vpn-purple/30 text-vpn-purple hover:bg-vpn-light-purple hover:border-vpn-purple"
         )}
         onClick={() => onConnect(server)}
         disabled={isCurrentServer || isConnecting || disabled || server.status !== 'online'}
       >
-        {isConnecting ? "Connecting..." : isCurrentServer ? "Connected" : "Connect"}
-        {!isConnecting && !isCurrentServer && <ArrowRight className="ml-2" size={16} />}
+        {isConnecting ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-vpn-purple border-t-transparent rounded-full animate-spin" />
+            Connecting...
+          </div>
+        ) : isCurrentServer ? (
+          "Connected"
+        ) : (
+          <div className="flex items-center gap-2">
+            Connect
+            <ArrowRight size={16} />
+          </div>
+        )}
       </Button>
     </div>
   );
