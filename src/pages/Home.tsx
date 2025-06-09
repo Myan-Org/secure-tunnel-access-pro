@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { useVpn } from '../context/VpnContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Server, Globe, Menu, Crown } from 'lucide-react';
+import { Shield, Server, Globe, Menu, Crown, Home, User, Settings, Star } from 'lucide-react';
 import ConnectionStatus from '../components/ConnectionStatus';
 import { useNavigate } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
@@ -27,7 +27,7 @@ const HomePage: React.FC = () => {
   const onlineServers = servers.filter(server => server.status === 'online');
   
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="flex justify-between items-center p-4">
         <Button variant="ghost" size="icon" className="text-muted-foreground">
@@ -152,6 +152,40 @@ const HomePage: React.FC = () => {
             </p>
             <p className="text-sm text-muted-foreground">Countries</p>
           </div>
+        </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border/20 backdrop-blur-lg">
+        <div className="grid grid-cols-4 py-2">
+          <button className="flex flex-col items-center gap-1 p-3 text-vpn-purple">
+            <Home size={20} />
+            <span className="text-xs font-medium">Home</span>
+          </button>
+          
+          <button 
+            className="flex flex-col items-center gap-1 p-3 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={upgradeSubscription}
+          >
+            <Star size={20} />
+            <span className="text-xs font-medium">Premium</span>
+          </button>
+          
+          <button 
+            className="flex flex-col items-center gap-1 p-3 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => navigate('/account')}
+          >
+            <User size={20} />
+            <span className="text-xs font-medium">Profile</span>
+          </button>
+          
+          <button 
+            className="flex flex-col items-center gap-1 p-3 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => navigate('/settings')}
+          >
+            <Settings size={20} />
+            <span className="text-xs font-medium">Settings</span>
+          </button>
         </div>
       </div>
     </div>
